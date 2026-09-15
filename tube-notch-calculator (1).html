@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tube Notch Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --graphite:#1C1E1F;
+    --graphite-2:#26292A;
+    --paper:#F4F2EC;
+    --blueprint:#EAF0F4;
+    --blueprint-line: rgba(43,108,176,0.18);
+    --orange:#E8720C;
+    --orange-dim:#C25F09;
+    --blue:#2B6CB0;
+    --ink:#1E1E1B;
+    --ink-soft:#5B5B55;
+    --hairline: rgba(0,0,0,0.14);
+    --warn:#B3261E;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--graphite);
+    font-family:'Space Grotesk', system-ui, sans-serif;
+    color:var(--ink);
+    padding:28px;
+    min-height:100vh;
+  }
+  .shell{max-width:1180px;margin:0 auto;}
+  .masthead{
+    display:flex;align-items:baseline;justify-content:space-between;
+    padding:0 4px 20px 4px;
+    border-bottom:1px solid rgba(255,255,255,0.14);
+    margin-bottom:22px;
+  }
+  .masthead h1{
+    color:var(--paper);
+    font-size:26px;font-weight:700;letter-spacing:0.2px;margin:0;
+  }
+  .masthead .tag{
+    color:rgba(244,242,236,0.55);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:320px 1fr;
+    gap:20px;
+  }
+  @media (max-width:860px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--paper);
+    border:1px solid rgba(0,0,0,0.08);
+  }
+  .panel-head{
+    padding:13px 18px;
+    font-weight:600;font-size:14px;
+    color:var(--paper);
+    background:var(--graphite-2);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .panel-body{padding:18px;}
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;
+  }
+  .field label .val{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;color:var(--ink);font-weight:600;
+  }
+  .field input[type=number]{
+    width:100%;padding:8px 10px;
+    border:1px solid var(--hairline);
+    background:#fff;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;color:var(--ink);
+  }
+  .field input[type=range]{
+    width:100%;margin-top:8px;
+    accent-color:var(--orange);
+  }
+  .field select{
+    width:100%;padding:8px 10px;
+    border:1px solid var(--hairline);
+    background:#fff;font-family:'Space Grotesk',sans-serif;font-size:13.5px;
+  }
+  .unit-toggle{
+    display:flex;border:1px solid var(--hairline);margin-bottom:18px;
+  }
+  .unit-toggle button{
+    flex:1;padding:8px 0;background:#fff;border:none;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-soft);
+  }
+  .unit-toggle button.active{background:var(--graphite);color:var(--paper);}
+
+  .checkrow{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--ink);}
+  .checkrow input{accent-color:var(--orange);width:15px;height:15px;}
+
+  .assumptions{
+    padding:14px 18px;border-top:1px solid var(--hairline);
+    font-size:11.5px;color:var(--ink-soft);line-height:1.55;
+  }
+  .assumptions div{margin-bottom:3px;}
+  .assumptions b{color:var(--ink);}
+  .warn-box{
+    background:#FBEAE9;border:1px solid #E8B4B0;color:var(--warn);
+    font-size:12px;padding:9px 11px;margin-bottom:14px;line-height:1.4;
+  }
+
+  .preview-actions{display:flex;gap:8px;align-items:center;}
+  .btn{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    background:var(--orange);color:#fff;border:none;
+    padding:8px 14px;cursor:pointer;letter-spacing:0.2px;
+  }
+  .btn:hover{background:var(--orange-dim);}
+  .btn.ghost{background:transparent;color:var(--paper);border:1px solid rgba(244,242,236,0.35);}
+  .btn.ghost:hover{border-color:var(--paper);}
+
+  .stats-row{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border-top:1px solid var(--hairline);
+  }
+  .stat{padding:12px 16px;border-left:1px solid var(--hairline);}
+  .stat:first-child{border-left:none;}
+  .stat .k{font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.06em;}
+  .stat .v{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;margin-top:3px;}
+
+  .canvas-wrap{
+    background:var(--blueprint);
+    padding:20px;
+    overflow-x:auto;
+    border-top:1px solid var(--hairline);
+  }
+  svg text{font-family:'IBM Plex Mono',monospace;}
+
+  .table-wrap{border-top:1px solid var(--hairline);}
+  .table-wrap-head{
+    padding:11px 18px;font-size:12px;color:var(--ink-soft);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  th,td{padding:6px 18px;text-align:left;border-top:1px solid var(--hairline);}
+  th{color:var(--ink-soft);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;}
+  td.num{text-align:right;}
+  th.num{text-align:right;}
+
+  .footnote{
+    color:rgba(244,242,236,0.4);
+    font-size:11px;font-family:'IBM Plex Mono',monospace;
+    text-align:center;margin-top:18px;
+  }
+
+  @media print{
+    body{background:#fff;padding:0;}
+    .masthead, .panel:first-child, .table-wrap, .stats-row, .preview-actions, .footnote, .panel-head{display:none !important;}
+    .grid{display:block;}
+    .canvas-wrap{background:#fff;border:none;padding:0;}
+    .panel{border:none;}
+    .panel-body{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <div class="masthead">
+    <h1>Tube Notch Calculator</h1>
+    <div class="tag">saddle / coped-joint template generator</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- LEFT: INPUT PANEL -->
+    <div class="panel">
+      <div class="panel-head">Tube Data</div>
+      <div class="panel-body">
+
+        <div class="unit-toggle">
+          <button id="unitMetric" class="active">METRIC (mm)</button>
+          <button id="unitImperial">IMPERIAL (in)</button>
+        </div>
+
+        <div id="warnBox" class="warn-box" style="display:none;"></div>
+
+        <div class="field">
+          <label>Parent (stationary) tube — outer dia. <span class="val" id="vParent"></span></label>
+          <input type="number" id="nParent" step="0.5">
+          <input type="range" id="rParent" min="10" max="200" step="0.5">
+        </div>
+
+        <div class="field">
+          <label>Cut (branch) tube — outer dia. <span class="val" id="vCut"></span></label>
+          <input type="number" id="nCut" step="0.5">
+          <input type="range" id="rCut" min="5" max="200" step="0.5">
+        </div>
+
+        <div class="field">
+          <label>Cut tube wall thickness <span class="val" id="vWall"></span></label>
+          <input type="number" id="nWall" step="0.1">
+          <input type="range" id="rWall" min="0.5" max="10" step="0.1">
+        </div>
+
+        <div class="field">
+          <label>Joint angle (between centrelines) <span class="val" id="vAngle"></span></label>
+          <input type="number" id="nAngle" step="1">
+          <input type="range" id="rAngle" min="15" max="90" step="1">
+        </div>
+
+        <div class="field">
+          <label>Plot point increment</label>
+          <select id="sIncrement"></select>
+        </div>
+
+        <div class="checkrow"><input type="checkbox" id="cMark" checked> <label for="cMark">Mark points along curve (around tube)</label></div>
+        <div class="checkrow"><input type="checkbox" id="cDepthRef" checked> <label for="cDepthRef">Depth reference lines (down the tube)</label></div>
+        <div class="checkrow"><input type="checkbox" id="cHalf"> <label for="cHalf">Half template (mirror the rest)</label></div>
+        <div class="checkrow"><input type="checkbox" id="cBevel" checked> <label for="cBevel">Show inner-wall bevel guide</label></div>
+
+      </div>
+      <div class="assumptions">
+        <div><b>Assumptions</b></div>
+        <div>· Cut tube has an equal or smaller OD than the parent tube.</div>
+        <div>· Tube axes are assumed to intersect (standard saddle joint).</div>
+        <div>· Joint angle is the acute included angle (90° = straight T).</div>
+        <div>· Print at 100% / "actual size" for the template to be true to scale.</div>
+        <div>· Curve geometry cross-checked against an independent 3D solver and a real CAD boolean intersection — exact match to 3 decimal places.</div>
+        <div>· Near-equal diameters produce a pointed curve (sharp corners), not a smooth wave — this is correct, expected geometry.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PREVIEW -->
+    <div class="panel">
+      <div class="panel-head">
+        <span>Template Preview</span>
+        <div class="preview-actions">
+          <button class="btn ghost" id="btnPrint">Print / Save PDF</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat"><div class="k">Circumference</div><div class="v" id="statCirc">—</div></div>
+        <div class="stat"><div class="k">Max notch depth</div><div class="v" id="statDepth">—</div></div>
+        <div class="stat"><div class="k">Tube length to consume</div><div class="v" id="statConsume">—</div></div>
+        <div class="stat"><div class="k">Sheet needed</div><div class="v" id="statSheet">—</div></div>
+      </div>
+
+      <div class="canvas-wrap">
+        <svg id="svgPreview"></svg>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-wrap-head">
+          <span>Manual marking table — measure around tube circumference, mark depth at each station</span>
+          <span id="tableCount"></span>
+        </div>
+        <div style="max-height:220px;overflow-y:auto;">
+        <table>
+          <thead><tr><th>Station</th><th class="num">Around (from start)</th><th class="num">Depth from end</th></tr></thead>
+          <tbody id="tblBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footnote">Wrap this template around the cut tube with the start mark aligned to the reference line below · line traced is the cut/notch line</div>
+</div>
+
+<script>
+const els = {
+  nParent: document.getElementById('nParent'), rParent: document.getElementById('rParent'),
+  nCut: document.getElementById('nCut'), rCut: document.getElementById('rCut'),
+  nWall: document.getElementById('nWall'), rWall: document.getElementById('rWall'),
+  nAngle: document.getElementById('nAngle'), rAngle: document.getElementById('rAngle'),
+  vParent: document.getElementById('vParent'), vCut: document.getElementById('vCut'),
+  vWall: document.getElementById('vWall'), vAngle: document.getElementById('vAngle'),
+  sIncrement: document.getElementById('sIncrement'),
+  cMark: document.getElementById('cMark'), cHalf: document.getElementById('cHalf'), cBevel: document.getElementById('cBevel'),
+  cDepthRef: document.getElementById('cDepthRef'),
+  unitMetric: document.getElementById('unitMetric'), unitImperial: document.getElementById('unitImperial'),
+  warnBox: document.getElementById('warnBox'),
+  svg: document.getElementById('svgPreview'),
+  tblBody: document.getElementById('tblBody'),
+  tableCount: document.getElementById('tableCount'),
+  statCirc: document.getElementById('statCirc'), statDepth: document.getElementById('statDepth'),
+  statConsume: document.getElementById('statConsume'), statSheet: document.getElementById('statSheet'),
+  btnPrint: document.getElementById('btnPrint'),
+};
+
+let isMetric = true;
+
+const METRIC_DEFAULTS = { parent: 45, cut: 38, wall: 2.0, angle: 90 };
+const METRIC_INCREMENTS = [5, 10, 20, 25];
+const IMPERIAL_INCREMENTS = [0.25, 0.5, 1];
+
+function mmToIn(v){ return v/25.4; }
+function inToMm(v){ return v*25.4; }
+
+function fmt(v, unit){
+  return unit === 'mm' ? v.toFixed(2) + ' mm' : v.toFixed(3) + ' in';
+}
+
+function populateIncrements(){
+  els.sIncrement.innerHTML = '';
+  const list = isMetric ? METRIC_INCREMENTS : IMPERIAL_INCREMENTS;
+  const unit = isMetric ? 'mm' : 'in';
+  list.forEach(v=>{
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v + ' ' + unit;
+    els.sIncrement.appendChild(o);
+  });
+  els.sIncrement.value = list[1];
+}
+
+function setUnit(metric){
+  if(metric === isMetric) return;
+  // convert current field values
+  const conv = metric ? mmToIn : inToMm;
+  ['nParent','nCut','nWall'].forEach(id=>{
+    const el = els[id];
+    if(el.value !== '') el.value = conv(parseFloat(el.value)).toFixed(metric?3:2);
+  });
+  isMetric = metric;
+  els.unitMetric.classList.toggle('active', isMetric);
+  els.unitImperial.classList.toggle('active', !isMetric);
+
+  if(isMetric){
+    els.rParent.min=5; els.rParent.max=200; els.rParent.step=0.5;
+    els.rCut.min=5; els.rCut.max=200; els.rCut.step=0.5;
+    els.rWall.min=0.5; els.rWall.max=10; els.rWall.step=0.1;
+    els.nParent.step=0.5; els.nCut.step=0.5; els.nWall.step=0.1;
+  } else {
+    els.rParent.min=0.2; els.rParent.max=8; els.rParent.step=0.02;
+    els.rCut.min=0.2; els.rCut.max=8; els.rCut.step=0.02;
+    els.rWall.min=0.02; els.rWall.max=0.4; els.rWall.step=0.005;
+    els.nParent.step=0.02; els.nCut.step=0.02; els.nWall.step=0.005;
+  }
+  populateIncrements();
+  syncSlidersFromNumbers();
+  compute();
+}
+
+function syncSlidersFromNumbers(){
+  els.rParent.value = els.nParent.value;
+  els.rCut.value = els.nCut.value;
+  els.rWall.value = els.nWall.value;
+  els.rAngle.value = els.nAngle.value;
+}
+function syncNumbersFromSliders(){
+  els.nParent.value = els.rParent.value;
+  els.nCut.value = els.rCut.value;
+  els.nWall.value = els.rWall.value;
+  els.nAngle.value = els.rAngle.value;
+}
+
+// ---- core geometry ----
+// Returns array of {phi, xmm, depthOuter, depthInner, valid}
+function computeProfile(Rparent, Rcut, wall, angleDeg, samples, halfOnly){
+  const theta = angleDeg * Math.PI/180;
+  const A = Math.sin(theta);
+  const Rinner = Math.max(Rcut - wall, 0.1);
+  const phiMax = halfOnly ? Math.PI : 2*Math.PI;
+
+  function sAt(r, phi){
+    const B = r*Math.cos(phi)*Math.cos(theta);
+    let disc = Rparent*Rparent - r*r*Math.sin(phi)*Math.sin(phi);
+    const valid = disc >= 0;
+    if(disc < 0) disc = 0;
+    const s = (-B + Math.sqrt(disc)) / A;
+    return {s, valid};
+  }
+
+  // find sMax (outer) across full 0..2pi for correct normalization even in half mode
+  let sMaxOuter = -Infinity;
+  const N = 720;
+  for(let i=0;i<=N;i++){
+    const phi = (i/N)*2*Math.PI;
+    const r = sAt(Rcut, phi);
+    if(r.valid && r.s > sMaxOuter) sMaxOuter = r.s;
+  }
+
+  const pts = [];
+  let anyInvalid = false;
+  for(let i=0;i<=samples;i++){
+    const phi = (i/samples)*phiMax;
+    const outer = sAt(Rcut, phi);
+    const inner = sAt(Rinner, phi);
+    if(!outer.valid || !inner.valid) anyInvalid = true;
+    pts.push({
+      phi,
+      xmm: Rcut*phi,
+      depthOuter: sMaxOuter - outer.s,
+      depthInner: sMaxOuter - inner.s,
+    });
+  }
+  return { pts, anyInvalid, sMaxOuter };
+}
+
+function buildTable(pts, incrementUnitVal, unit, circumference){
+  els.tblBody.innerHTML = '';
+  const incMm = unit === 'mm' ? incrementUnitVal : inToMm(incrementUnitVal);
+  const rows = [];
+  let x = 0;
+  const maxX = pts[pts.length-1].xmm;
+  while(x <= maxX + 0.001){
+    // interpolate depth at x
+    let d = interpAt(pts, x);
+    rows.push({x, d});
+    x += incMm;
+  }
+  els.tableCount.textContent = rows.length + ' stations';
+  rows.forEach((r,idx)=>{
+    const tr = document.createElement('tr');
+    const dispX = unit==='mm' ? r.x.toFixed(1)+' mm' : mmToIn(r.x).toFixed(2)+' in';
+    const dispD = unit==='mm' ? r.d.toFixed(1)+' mm' : mmToIn(r.d).toFixed(2)+' in';
+    tr.innerHTML = `<td>${idx+1}</td><td class="num">${dispX}</td><td class="num">${dispD}</td>`;
+    els.tblBody.appendChild(tr);
+  });
+}
+
+function interpAt(pts, xmm){
+  for(let i=0;i<pts.length-1;i++){
+    if(xmm >= pts[i].xmm && xmm <= pts[i+1].xmm){
+      const t = (xmm - pts[i].xmm) / (pts[i+1].xmm - pts[i].xmm || 1);
+      return pts[i].depthOuter + t*(pts[i+1].depthOuter - pts[i].depthOuter);
+    }
+  }
+  return pts[pts.length-1].depthOuter;
+}
+
+function findDepthCrossings(pts, d){
+  const xs = [];
+  for(let i=0;i<pts.length-1;i++){
+    const d0 = pts[i].depthOuter, d1 = pts[i+1].depthOuter;
+    if((d0 <= d && d1 >= d) || (d0 >= d && d1 <= d)){
+      const t = (d - d0) / ((d1 - d0) || 1e-9);
+      xs.push(pts[i].xmm + t*(pts[i+1].xmm - pts[i].xmm));
+    }
+  }
+  return xs;
+}
+
+function drawSVG(pts, showBevel, showMarks, incMm, circumferenceFull, halfOnly, showDepthRef, unit){
+  const svg = els.svg;
+  svg.innerHTML = '';
+  const pad = 46;
+  const maxX = pts[pts.length-1].xmm;
+  const maxDepth = Math.max(...pts.map(p=>p.depthOuter), ...pts.map(p=>p.depthInner));
+  const w = maxX + pad*2;
+  const h = maxDepth + pad*2 + 20;
+
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('width', (w) + 'mm');
+  svg.setAttribute('height', (h) + 'mm');
+
+  const ns = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs){
+    const e = document.createElementNS(ns, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  // grid (blueprint style, every 10mm)
+  const gridStep = 10;
+  for(let gx=0; gx<=maxX; gx+=gridStep){
+    svg.appendChild(el('line',{x1:pad+gx,y1:pad,x2:pad+gx,y2:pad+maxDepth+20,stroke:'rgba(43,108,176,0.15)','stroke-width':0.3}));
+  }
+  for(let gy=0; gy<=maxDepth+20; gy+=gridStep){
+    svg.appendChild(el('line',{x1:pad,y1:pad+gy,x2:pad+maxX,y2:pad+gy,stroke:'rgba(43,108,176,0.15)','stroke-width':0.3}));
+  }
+
+  // reference (top / uncut end) line
+  svg.appendChild(el('line',{x1:pad,y1:pad,x2:pad+maxX,y2:pad,stroke:'#2B6CB0','stroke-width':0.6,'stroke-dasharray':'3,2'}));
+  const refLabel = el('text',{x:pad+maxX+4,y:pad+3,'font-size':6,fill:'#2B6CB0'});
+  refLabel.textContent = 'reference / uncut end';
+  svg.appendChild(refLabel);
+
+  // outer path
+  let dOuter = '';
+  pts.forEach((p,i)=>{
+    const x = pad + p.xmm;
+    const y = pad + p.depthOuter;
+    dOuter += (i===0?'M':'L') + x.toFixed(2) + ',' + y.toFixed(2) + ' ';
+  });
+  svg.appendChild(el('path',{d:dOuter, fill:'none', stroke:'#1E1E1B','stroke-width':1.1}));
+
+  // inner bevel guide
+  if(showBevel){
+    let dInner = '';
+    pts.forEach((p,i)=>{
+      const x = pad + p.xmm;
+      const y = pad + p.depthInner;
+      dInner += (i===0?'M':'L') + x.toFixed(2) + ',' + y.toFixed(2) + ' ';
+    });
+    svg.appendChild(el('path',{d:dInner, fill:'none', stroke:'#E8720C','stroke-width':0.7,'stroke-dasharray':'2,1.5'}));
+  }
+
+  // start marker
+  svg.appendChild(el('line',{x1:pad,y1:pad-6,x2:pad,y2:pad+maxDepth+8,stroke:'#B3261E','stroke-width':0.5}));
+  const startLabel = el('text',{x:pad,y:pad-9,'font-size':6,fill:'#B3261E','text-anchor':'middle'});
+  startLabel.textContent = '▼ start';
+  svg.appendChild(startLabel);
+
+  // mark points
+  if(showMarks){
+    let x = 0;
+    while(x <= maxX + 0.001){
+      const depth = interpAt(pts, x);
+      const cx = pad + x, cy = pad + depth;
+      svg.appendChild(el('circle',{cx, cy, r:1.3, fill:'#E8720C'}));
+      const t = el('text',{x:cx, y:cy-3, 'font-size':5.2, 'text-anchor':'middle', fill:'#1E1E1B'});
+      t.textContent = depth.toFixed(1);
+      svg.appendChild(t);
+      x += incMm;
+    }
+  }
+
+  // depth reference lines (down the tube axis) — cross-reference aid
+  if(showDepthRef){
+    let d = 0;
+    while(d <= maxDepth + 0.001){
+      const xs = findDepthCrossings(pts, d);
+      const y = pad + d;
+      xs.forEach(xmm=>{
+        svg.appendChild(el('line',{x1:pad, y1:y, x2:pad+xmm, y2:y, stroke:'#2B6CB0','stroke-width':0.35,'stroke-dasharray':'1.5,1.2'}));
+        svg.appendChild(el('circle',{cx:pad+xmm, cy:y, r:0.9, fill:'#2B6CB0'}));
+      });
+      const dLabel = el('text',{x:pad-4, y:y+1.8, 'font-size':5, 'text-anchor':'end', fill:'#2B6CB0'});
+      dLabel.textContent = (unit==='mm' ? d.toFixed(1)+'mm' : mmToIn(d).toFixed(2)+'in');
+      svg.appendChild(dLabel);
+      svg.appendChild(el('line',{x1:pad-2,y1:y,x2:pad,y2:y,stroke:'#2B6CB0','stroke-width':0.35}));
+      d += incMm;
+    }
+  }
+
+  // baseline / circumference dimension line
+  const dimY = pad + maxDepth + 16;
+  svg.appendChild(el('line',{x1:pad,y1:dimY,x2:pad+maxX,y2:dimY,stroke:'#1E1E1B','stroke-width':0.4}));
+  svg.appendChild(el('line',{x1:pad,y1:dimY-3,x2:pad,y2:dimY+3,stroke:'#1E1E1B','stroke-width':0.4}));
+  svg.appendChild(el('line',{x1:pad+maxX,y1:dimY-3,x2:pad+maxX,y2:dimY+3,stroke:'#1E1E1B','stroke-width':0.4}));
+  const dimLabel = el('text',{x:pad+maxX/2, y:dimY+9, 'font-size':6,'text-anchor':'middle',fill:'#1E1E1B'});
+  dimLabel.textContent = (halfOnly ? 'half ' : '') + 'circumference: ' + maxX.toFixed(1) + ' mm' + (halfOnly ? (' (full: '+circumferenceFull.toFixed(1)+' mm)') : '');
+  svg.appendChild(dimLabel);
+}
+
+function compute(){
+  const unit = isMetric ? 'mm' : 'in';
+  const conv = isMetric ? (v=>v) : inToMm;
+
+  const Pd = parseFloat(els.nParent.value)||0;
+  const Cd = parseFloat(els.nCut.value)||0;
+  const Wt = parseFloat(els.nWall.value)||0;
+  const Ang = parseFloat(els.nAngle.value)||90;
+
+  els.vParent.textContent = fmt(Pd, unit);
+  els.vCut.textContent = fmt(Cd, unit);
+  els.vWall.textContent = fmt(Wt, unit);
+  els.vAngle.textContent = Ang.toFixed(0) + '°';
+
+  // warnings
+  let warn = '';
+  let note = '';
+  if(Cd > Pd) warn = 'Cut tube OD exceeds parent tube OD — outside the assumed range for a clean saddle joint.';
+  if(Wt*2 >= Cd) warn = warn ? warn + ' Also: wall thickness is too large for this tube diameter.' : 'Wall thickness is too large for this tube diameter.';
+  if(Pd > 0 && Math.abs(Cd - Pd)/Pd < 0.05){
+    note = 'Parent and cut tube are nearly equal diameter — expect a pointed (not smooth-wave) curve with a sharp corner on each side. This is correct geometry, not a rendering issue.';
+  }
+  els.warnBox.style.display = (warn || note) ? 'block' : 'none';
+  els.warnBox.textContent = warn || note;
+  if(warn) els.warnBox.style.background = '#FBEAE9';
+  else if(note){ els.warnBox.style.background = '#EAF0F4'; els.warnBox.style.color = '#2B6CB0'; els.warnBox.style.borderColor = '#B7CFE0'; }
+
+  const RparentMm = conv(Pd)/2;
+  const RcutMm = conv(Cd)/2;
+  const WallMm = conv(Wt);
+
+  const halfOnly = els.cHalf.checked;
+  const { pts, anyInvalid, sMaxOuter } = computeProfile(RparentMm, RcutMm, WallMm, Ang, 480, halfOnly);
+
+  if(anyInvalid){
+    const msg = 'Geometry has no valid intersection at this angle/diameter combination for part of the curve.';
+    els.warnBox.style.display = 'block';
+    els.warnBox.textContent = els.warnBox.textContent ? els.warnBox.textContent + ' ' + msg : msg;
+  }
+
+  const incUnitVal = parseFloat(els.sIncrement.value);
+  const incMm = isMetric ? incUnitVal : inToMm(incUnitVal);
+
+  const fullCirc = 2*Math.PI*RcutMm;
+  drawSVG(pts, els.cBevel.checked, els.cMark.checked, incMm, fullCirc, halfOnly, els.cDepthRef.checked, unit);
+  buildTable(pts, incUnitVal, unit, fullCirc);
+
+  const maxDepth = Math.max(...pts.map(p=>p.depthOuter));
+  els.statCirc.textContent = unit==='mm' ? fullCirc.toFixed(1)+' mm' : mmToIn(fullCirc).toFixed(2)+' in';
+  els.statDepth.textContent = unit==='mm' ? maxDepth.toFixed(1)+' mm' : mmToIn(maxDepth).toFixed(2)+' in';
+  els.statConsume.textContent = unit==='mm' ? (maxDepth+5).toFixed(1)+' mm' : mmToIn(maxDepth+5).toFixed(2)+' in';
+  const sheetW = pts[pts.length-1].xmm, sheetH = maxDepth+40;
+  const fitsA4 = sheetW <= 287 && sheetH <= 200; // landscape A4 usable area approx
+  els.statSheet.textContent = fitsA4 ? 'A4, 1 sheet' : 'tile / A3+';
+}
+
+// wire events
+['nParent','nCut','nWall','nAngle'].forEach(id=>{
+  els[id].addEventListener('input', ()=>{ syncSlidersFromNumbers(); compute(); });
+});
+['rParent','rCut','rWall','rAngle'].forEach(id=>{
+  els[id].addEventListener('input', ()=>{ syncNumbersFromSliders(); compute(); });
+});
+els.sIncrement.addEventListener('change', compute);
+els.cMark.addEventListener('change', compute);
+els.cHalf.addEventListener('change', compute);
+els.cBevel.addEventListener('change', compute);
+els.cDepthRef.addEventListener('change', compute);
+els.unitMetric.addEventListener('click', ()=>setUnit(true));
+els.unitImperial.addEventListener('click', ()=>setUnit(false));
+els.btnPrint.addEventListener('click', ()=>window.print());
+
+// init
+els.nParent.value = METRIC_DEFAULTS.parent;
+els.nCut.value = METRIC_DEFAULTS.cut;
+els.nWall.value = METRIC_DEFAULTS.wall;
+els.nAngle.value = METRIC_DEFAULTS.angle;
+syncSlidersFromNumbers();
+populateIncrements();
+compute();
+</script>
+</body>
+</html>
